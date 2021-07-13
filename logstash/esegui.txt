@@ -1,0 +1,1 @@
+docker run --rm -it -v /home/federico/amazonAnalyzer/logstash/pipeline/:/usr/share/logstash/pipeline/ amazon_analyzer:logstash
