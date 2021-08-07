@@ -8,19 +8,18 @@ services:
         container_name: python_AM
         networks:
             tap:
-                ipv4_address: 10.0.100.3
+                ipv4_address: ${IP_PYTHON_AMAZON}
         environment:
             CODE_PRODUCT: B093T7GQWB
             PYTHON_APP: amazonScraper.py
-            HOST_LOGSTASH: 10.0.100.2
-            PORT_LOGSTASH: 6000
+            HOST_LOGSTASH: ${IP_LOGSTASH}
+            PORT_LOGSTASH: ${PORT_LOGSTASH}
             TIMEOUT_BEFORE_LOGSTASH: 100
             TIMEOUT_FETCH_ANOTHER_PAGE: 5
             DEBUG: "no"
             START_PAGE: 0
             END_PAGE: 6
-        depends_on:
-            - logstash
+        
     logstash:
         build:
             context: ./logstash
@@ -29,13 +28,14 @@ services:
         container_name: logstash_AM
         networks:
             tap:
-                ipv4_address: 10.0.100.2
+                ipv4_address: ${IP_LOGSTASH}
         volumes:
             - $PWD/logstash/pipeline/:/usr/share/logstash/pipeline/
         ports:
-            - 6000:6000
+            - ${PORT_LOGSTASH}:${PORT_LOGSTASH}
         environment:
-            TCP_PORT: 6000
+            TCP_PORT: ${PORT_LOGSTASH}
+            TOPIC: ${TOPIC}
         depends_on:
             - kafka_server
     zookeeper:
@@ -46,9 +46,9 @@ services:
         container_name: zookeeper_AM
         networks: 
             tap:
-                ipv4_address: 10.0.100.22
+                ipv4_address: ${IP_ZOOKEEPER}
         ports:
-            - 2181:2181
+            - ${PORT_ZOOKEEPER}:${PORT_ZOOKEEPER}
         environment: 
             KAFKA_ACTION: start-zk
     
@@ -60,38 +60,48 @@ services:
         container_name: kafka_server_AM
         networks: 
             tap:
-                ipv4_address: 10.0.100.23
+                ipv4_address: ${IP_KAFKA_SERVER}
         ports:
-            - 9092:9092
+            - ${PORT_KAFKA_SERVER}:${PORT_KAFKA_SERVER}
         environment: 
             KAFKA_ACTION: start-kafka
         depends_on: 
             - zookeeper
     
-    # spark:
-    #     build:
-    #         context: ./spark
-    #         dockerfile: Dockerfile
-    #     image: am:spark
-    #     container_name: spark_AM
-    #     networks:
-    #         tap:
-    #             ipv4_address: 10.0.100.80
-    #     environment:
-    #         SPARK_ACTION: "spark-submit-python"
-    #         #TAP_CODE: app.py
-    #     command: ["python3","/opt/tap/app.py", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.elasticsearch:elasticsearch-spark-30_2.12:7.12.1"]
-    #     depends_on:
-    #         - kafka_server
+    spark:
+        build:
+            context: ./spark
+            dockerfile: Dockerfile
+        image: am:spark
+        container_name: spark_AM
+        networks:
+            tap:
+                ipv4_address: ${IP_SPARK}
+        environment:
+            SPARK_ACTION: "spark-submit-python"
+            HOST_ELASTIC: ${IP_ELASTIC} 
+            PORT_ELASTIC: ${PORT_ELASTIC_1}
+            TOPIC: ${TOPIC}
+            TIMEOUT_BEFORE_START_SPARK: 60
+            INDEX: ${INDEX}
+            #TAP_CODE: app.py
+        command: ["./bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.elasticsearch:elasticsearch-spark-30_2.12:7.12.1  /opt/tap/app.py"]
+        #command: ["python","/opt/tap/app.py", "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.elasticsearch:elasticsearch-spark-30_2.12:7.12.1"]
+        depends_on:
+            - kafka_server
+            - logstash
+            - zookeeper
+            - elastic_search
     
+
     webui:
         image: provectuslabs/kafka-ui:latest
         container_name: kafkaWebUI_AM
         environment:
             - KAFKA_CLUSTERS_0_NAME=local
-            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=10.0.100.23:9092
+            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=${IP_KAFKA_SERVER}:${PORT_KAFKA_SERVER}
         ports: 
-            - 8080:8080
+            - ${PORT_WEBUI}:${PORT_WEBUI}
         networks: 
             - tap
         depends_on:
@@ -105,14 +115,14 @@ services:
         container_name: elastic_search_AM
         networks: 
             tap:
-                ipv4_address: 10.0.100.51
+                ipv4_address: ${IP_ELASTIC}
         ports:
-            - 9200:9200
-            - 9300:9300
+            - ${PORT_ELASTIC_1}:${PORT_ELASTIC_1}
+            - ${PORT_ELASTIC_2}:${PORT_ELASTIC_2}
         environment:
             discovery.type: single-node
             ES_JAVA_OPTS: -Xms4g -Xmx4g
-            #KAFKA_ACTION: start-kafka
+            
     
     kibana:
         build:
@@ -122,9 +132,9 @@ services:
         container_name: kibana_AM
         networks: 
             tap:
-                ipv4_address: 10.0.100.52
+                ipv4_address: ${IP_KIBANA}
         ports:
-            - 5601:5601
+            - ${PORT_KIBANA}:${PORT_KIBANA}
             
 
 networks: 

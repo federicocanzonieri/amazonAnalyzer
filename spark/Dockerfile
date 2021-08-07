@@ -9,13 +9,14 @@ ADD setup/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz /opt
 
 RUN apt-get update && apt-get -y install bash python3 python3-pip netcat
 
-RUN pip3 install pyspark numpy elasticsearch kafka-python  msgpack
+RUN pip3 install pyspark numpy elasticsearch kafka-python  msgpack vaderSentiment
 # Create Sym Link 
 RUN ln -s /opt/spark-${SPARK_VERSION}-bin-hadoop2.7 ${SPARK_DIR} 
 
 #ADD dataset /opt/tap/spark/dataset
 # Add Python Code
 ADD code/*  /opt/tap/
+#ADD json/*  /opt/tap/json/
 # Add Java Code
 #ADD apps /opt/tap/apps
 # Add Spark Manager

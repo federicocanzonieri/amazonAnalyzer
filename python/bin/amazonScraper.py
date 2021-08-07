@@ -9,11 +9,11 @@ import json
 
 
 def get_reviews(soup,s):
-    source_geo=soup.find('h3',{'data-hook':"arp-local-reviews-header"})
-    global_geo=soup.find('h3',{'data-hook':"dp-global-reviews-header"})
+    # source_geo=soup.find('h3',{'data-hook':"arp-local-reviews-header"})
+    # global_geo=soup.find('h3',{'data-hook':"dp-global-reviews-header"})
     
-    source_geo="rer"
-    global_geo="ere"
+    # source_geo="rer"
+    # global_geo="ere"
 
     ###ONLY 1 FOR
     print("START GENERAL")
@@ -176,10 +176,10 @@ if DEBUG=='no':
     s=socket.socket()
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+
+
 ## B00ZYDLE80 paperino
 ## B093T7GQWB moco
-
-
 
 for i in range(START_PAGE,END_PAGE):
     url="https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i)
@@ -198,6 +198,4 @@ if DEBUG=='no':
 
 
 
-##SISTEMARE ALTRI PAESI / ITALIA FATTO
-###CREARE DIREC PROG, git init, completare script con logstash e vedere cosa invia, poi kafka, spark, elastic, kibana
 
