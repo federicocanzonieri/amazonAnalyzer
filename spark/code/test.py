@@ -11,7 +11,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 ##ESTABLISH CONNECTION TO LOGSTASH
-
+###TESTING 
 sid = SentimentIntensityAnalyzer()
 
 

@@ -5,17 +5,12 @@ import os
 import socket
 import time
 import json
+import requests
 
-
-
+###FUNCTION TO RETRIEVE REVIEWS AND OTHER DATA
 def get_reviews(soup,s):
-    # source_geo=soup.find('h3',{'data-hook':"arp-local-reviews-header"})
-    # global_geo=soup.find('h3',{'data-hook':"dp-global-reviews-header"})
     
-    # source_geo="rer"
-    # global_geo="ere"
-
-    ###ONLY 1 FOR
+    
     print("START GENERAL")
     reviews = soup.find_all('div',{'data-hook':'review'})
     for item in reviews:
@@ -75,65 +70,39 @@ def get_reviews(soup,s):
             'helpful_vote': helpful_vote,
             'country':country
         }
-        print(review)
+        if DEBUG=='yes':
+            print(review)
+            
         s.send(json.dumps(review).encode())
         s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
-        time.sleep(1)
+        time.sleep(int(TIMEOUT_BEFORE_SEND_TO_LOGSTASH))
 
     print("END GENERAL")
-    """
-    if DEBUG=='no':
-        if source_geo is not None:
-            print("SOURCE")
-            reviews = soup.find_all('div', {'data-hook': 'review'})
-            try:
-                for item in reviews:
-                    #print(item.find('span', {'data-hook': 'review-title'}).text.strip())
-                    review = {
-                    #'product': soup.title.text.replace('Amazon.it:Customer reviews:', '').strip(),
-                    'title': item.find('a', {'data-hook': 'review-title'}).text.strip(),
-                    'rating':  (item.find('span', {'class': 'a-icon-alt'}).text[:1].strip()),
-                    'body': item.find('span', {'data-hook': 'review-body'}).text.strip(),
-                    'date': item.find('span',{'data-hook':'review-date'}).text.strip()
-                    }
 
-                    
-                    # s.send(json.dumps(review).encode())
-                    # s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
-                    # time.sleep(1)
-                    
-                    #s.sendall(bytes(REQUIRED_CHARACTER,'utf-8'))
-                    #reviewlist.append(review)
-                    #print(item.text.split('\n\n\n')) ##PROVARE
-            except Exception as e:
-                print(e)
-                pass
+
+
+#https://m.media-amazon.com/images/I/81SiQ9hXnDL._AC_SX679_.jpg
+def get_photos(url):
+    print(url)
+    driver.get(url)
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    img_container=soup.find_all("div",{"id":"imgTagWrapperId"})
+    download_url=""
+    for item in img_container:
+        print(item)
         
-        if global_geo is not None:
-            print("GLOBAL")
-            reviews = soup.find_all('div', {'data-hook': 'review'})
-            try:
-                for item in reviews:
-                    print(item.find('span', {'data-hook': 'review-title'}).text.strip())
-                    review = {
-                    #'product': soup.title.text.replace('Amazon.it:Customer reviews:', '').strip(),
-                    'title': item.find('span', {'data-hook': 'review-title'}).text.strip(),
-                    'rating':  (item.find('span', {'class': 'a-icon-alt'}).text[:1].strip()),
-                    'body': item.find('span', {'class': 'cr-original-review-content'}).text.strip(),
-                    'date': item.find('span',{'data-hook':'review-date'}).text.strip()
-                    }
-                    
-                    # s.send(json.dumps(review).encode())
-                    # s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
-                    # time.sleep(1)
-                    
-            except Exception as e:
-                print(e)
-                pass
-    """
+        for img in item.find_all("img"):
+            
+            print(img.get('data-a-dynamic-image').split(":")[1])
+            download_url="https:"+str(img.get('data-a-dynamic-image').split(":")[1])
+            print(download_url[:-1])
+        #print(item.attrs['class'][0]])
 
-
-
+    response = requests.get(str(download_url[:-1]))
+    file = open("images/product_image.jpg", "wb")
+    file.write(response.content)
+    file.close()
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--disable-gpu')
@@ -142,19 +111,20 @@ chrome_options.add_argument('--headless')
 chrome_options.add_argument('--disable-extensions')
 driver = webdriver.Chrome(chrome_options=chrome_options)
 
-CODE_PRODUCT=os.getenv("CODE_PRODUCT")
-HOST_LOGSTASH=os.getenv("HOST_LOGSTASH")
-PORT_LOGSTASH=os.getenv("PORT_LOGSTASH")
-TIMEOUT_BEFORE_LOGSTASH=os.getenv("TIMEOUT_BEFORE_LOGSTASH")       ##SECONDI PRIMA CHE LOGSTASH PARTE (100) va bene
-TIMEOUT_FETCH_ANOTHER_PAGE=os.getenv("TIMEOUT_FETCH_ANOTHER_PAGE") ##SECONDI PRIMA CHE PRENDI UN'ALTRA PAGINA (5) (SERVE A EVITARE DI ESSERE BANNATO)
+CODE_PRODUCT=os.getenv("CODE_PRODUCT")                             ##CODICE PRODOTTO DA ANALIZZARE
+HOST_LOGSTASH=os.getenv("HOST_LOGSTASH")                           ##IP LOGSTASH
+PORT_LOGSTASH=os.getenv("PORT_LOGSTASH")                           ##PORT LOGSTASH
+TIMEOUT_BEFORE_LOGSTASH=os.getenv("TIMEOUT_BEFORE_LOGSTASH")       ##SECONDI DA ASPETTARE PRIMA CHE LOGSTASH PARTE (100 sec) DEPRECATO
+TIMEOUT_BEFORE_SEND_TO_LOGSTASH=os.getenv("TIMEOUT_BEFORE_SEND_TO_LOGSTASH")##SECONDI DA ASPETTARE PRIMA DI INVIARE DATI A LOGSTASH PARTE (1 sec) DEPRECATO
+TIMEOUT_FETCH_ANOTHER_PAGE=os.getenv("TIMEOUT_FETCH_ANOTHER_PAGE") ##SECONDI PRIMA CHE PRENDI UN'ALTRA PAGINA (5 sec) (SERVE A EVITARE DI ESSERE BANNATO)
 START_PAGE=int(os.getenv("START_PAGE"))                            ##PAGINA DA CUI INIZIARE (PREFERIBILMENTE 0)
 END_PAGE=int(os.getenv("END_PAGE"))                                ##PAGINA FINALE 
-DEBUG=os.getenv("DEBUG")
+DEBUG=os.getenv("DEBUG")                                           ##MODALITA DEBUG SKIPPA CONNESSIONE LOGSTASH SOLO PER TEST E ESPERIMENTI!
 
 HOST=HOST_LOGSTASH
 PORT=int(PORT_LOGSTASH)
-REQUIRED_CHARACTER="\n"                                            ## REQUIRED FOR LOGSTASH TO TAKE EVENT SEPARATED (TCP PLUGIN)
-s="PLACEHOLDER"
+REQUIRED_CHARACTER="\n"                                            ##REQUIRED FOR LOGSTASH TO TAKE EVENT SEPARATED (TCP PLUGIN)
+s="PLACEHOLDER"                                                    ##PLACEHOLDER FOR SOCKET
 
 ## WAIT UNTIL LOGSTASH IS UP 
 ##time.sleep(int(TIMEOUT_BEFORE_LOGSTASH)) <--- DEPRECATED
@@ -164,7 +134,6 @@ if DEBUG=='no':
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((HOST_LOGSTASH, int(PORT_LOGSTASH)))
-            #sock.sendall(json.dumps(data).encode())
             sock.close()
             error = False
         except:
@@ -178,24 +147,37 @@ if DEBUG=='no':
     s.connect((HOST, PORT))
 
 
-## B00ZYDLE80 paperino
-## B093T7GQWB moco
+##CODICI TEST
+
+##B00ZYDLE80 paperino
+##B093T7GQWB moco
+
+
+##TAKE PHOTOS
+url_photo="https://www.amazon.it/dp/"+str(CODE_PRODUCT)
+#url_photo="https://www.amazon.it/dp/B07ZZVWB4L/"
+get_photos(url_photo)
+
+
 
 for i in range(START_PAGE,END_PAGE):
     url="https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i)
-    print(url)
     driver.get(url)
     #driver.get("https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i))
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
-    
     get_reviews(soup,s)
-    print(i)
     time.sleep(int(TIMEOUT_FETCH_ANOTHER_PAGE))
 
+    if DEBUG=='yes' :
+        print(url)
+        print(i)
+
+    
 if DEBUG=='no':
     s.close()
 
+print("FINISHED FETCH PAGES")
 
 
 

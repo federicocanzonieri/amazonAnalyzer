@@ -10,16 +10,34 @@ services:
             tap:
                 ipv4_address: ${IP_PYTHON_AMAZON}
         environment:
-            CODE_PRODUCT: B093T7GQWB
+            CODE_PRODUCT: ${CODE_PRODUCT}
             PYTHON_APP: amazonScraper.py
             HOST_LOGSTASH: ${IP_LOGSTASH}
             PORT_LOGSTASH: ${PORT_LOGSTASH}
-            TIMEOUT_BEFORE_LOGSTASH: 100
-            TIMEOUT_FETCH_ANOTHER_PAGE: 5
-            DEBUG: "no"
-            START_PAGE: 0
-            END_PAGE: 6
-        
+            TIMEOUT_BEFORE_LOGSTASH: ${TIMEOUT_BEFORE_LOGSTASH}
+            TIMEOUT_FETCH_ANOTHER_PAGE: ${TIMEOUT_FETCH_ANOTHER_PAGE}
+            TIMEOUT_BEFORE_SEND_TO_LOGSTASH: ${TIMEOUT_BEFORE_SEND_TO_LOGSTASH}
+            DEBUG: ${DEBUG}
+            START_PAGE: ${START_PAGE}
+            END_PAGE: ${END_PAGE}
+        volumes:
+            - myapp:/usr/src/app/images/
+    streaming:
+        build:
+            context: ./python
+            dockerfile: Dockerfile
+        image: am:streaming
+        container_name: streaming_AM
+        networks:
+            tap:
+                ipv4_address: ${IP_STREAMING}
+        environment:
+            CODE_PRODUCT: ${CODE_PRODUCT}
+            PYTHON_APP: streaming.py
+            HOST_LOGSTASH: ${IP_LOGSTASH}
+            PORT_LOGSTASH: ${PORT_LOGSTASH_STREAMING}
+            MINUTES_TO_WAIT: ${MINUTES_TO_WAIT}
+        entrypoint: ["./python-manager.sh"]
     logstash:
         build:
             context: ./logstash
@@ -35,6 +53,7 @@ services:
             - ${PORT_LOGSTASH}:${PORT_LOGSTASH}
         environment:
             TCP_PORT: ${PORT_LOGSTASH}
+            STREAMING_PORT: ${PORT_LOGSTASH_STREAMING}
             TOPIC: ${TOPIC}
         depends_on:
             - kafka_server
@@ -82,7 +101,7 @@ services:
             HOST_ELASTIC: ${IP_ELASTIC} 
             PORT_ELASTIC: ${PORT_ELASTIC_1}
             TOPIC: ${TOPIC}
-            TIMEOUT_BEFORE_START_SPARK: 60
+            TIMEOUT_BEFORE_START_SPARK: ${TIMEOUT_BEFORE_START_SPARK}
             INDEX: ${INDEX}
             #TAP_CODE: app.py
         command: ["./bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.elasticsearch:elasticsearch-spark-30_2.12:7.12.1  /opt/tap/app.py"]
@@ -121,7 +140,8 @@ services:
             - ${PORT_ELASTIC_2}:${PORT_ELASTIC_2}
         environment:
             discovery.type: single-node
-            ES_JAVA_OPTS: -Xms4g -Xmx4g
+            ES_JAVA_OPTS: -Xms2g -Xmx2g
+            
             
     
     kibana:
@@ -135,7 +155,11 @@ services:
                 ipv4_address: ${IP_KIBANA}
         ports:
             - ${PORT_KIBANA}:${PORT_KIBANA}
-            
+        volumes:
+            - myapp:/usr/share/kibana/src/core/server/core_app/assets/favicons
+
+volumes:
+    myapp:
 
 networks: 
     tap:
