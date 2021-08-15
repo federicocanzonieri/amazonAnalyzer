@@ -9,6 +9,11 @@ import time
 import socket
 import os
 from pyspark.sql.functions import udf
+from translate import Translator
+
+
+translator= Translator(to_lang="en")
+
 
 HOST_ELASTIC=os.getenv("IP_ELASTIC")
 PORT_ELASTIC=os.getenv("PORT_ELASTIC_1")
@@ -22,7 +27,8 @@ time.sleep(int(os.getenv("TIMEOUT_BEFORE_START_SPARK")))
 
 ##GET POLARITY
 def get_sentiment(text):
-    value = vader.polarity_scores(text)
+    
+    value = vader.polarity_scores(translator.translate(text))
     value = value['compound']
     return value
 
@@ -77,10 +83,12 @@ es_mapping = {
             "rating":   {"type": "integer"},
             "title":    {"type": "keyword"},
             "body":     {"type": "keyword"},
-            "date":     {"type": "keyword"},
-            ##AGGIUNGERE ALTRI
-            #"coords":           {"type": "text"},
-            #"PI":               {"type": "keyword"}
+            "date":     {"type": "date","format":"yyyy-MM-dd"},
+            "name": {"type":"keyword"},
+            "verified_buy" :{"type":"keyword"},
+            "helpful_vote": {"type": "integer"},
+            "country":{"type":"keyword"},
+            "sentiment":{"type":"double"}
         }
     }
 }

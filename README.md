@@ -65,7 +65,7 @@ To modify configuration see **.env** file
 Here is the table of services and network configuration.
 
 | Service| IP|Port |
-| :-: | :-: |:-:| :-: | 
+| :-: | :-: |:-:|  
 |Python |**10.100.100.4**|
 |Streaming|**10.100.100.5** |
 |Logstash| **10.100.100.15** |**6000/6001**

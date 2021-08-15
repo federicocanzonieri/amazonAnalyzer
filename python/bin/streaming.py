@@ -8,6 +8,8 @@ import json
 import datetime 
 
 
+#########SISTEMARE LINGUA INGLESE PURE QUAAAAAAAAAAAAAAA
+
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--no-sandbox')
@@ -21,6 +23,14 @@ PORT=os.getenv("PORT_LOGSTASH")
 CODE_PRODUCT=os.getenv("CODE_PRODUCT")
 MINUTES_TO_WAIT=int(os.getenv("MINUTES_TO_WAIT"))
 REQUIRED_CHARACTER="\n" #### REQUIRED FOR LOGSTASH TO TAKE EVENT SEPARATED (TCP PLUGIN)
+DOMAIN_URL=os.getenv("DOMAIN_URL")
+
+months={}
+if DOMAIN_URL=='it':
+    months={'gennaio':'01','febbraio':'02','marzo':'03','aprile':'04','maggio':'05','giugno':'06','luglio':'07','agosto':'08','settembre':'09','ottobre':'10','novembre':'11','dicembre':'12'}
+else:
+    months={'january':'01','february':'02','march':'03','april':'04','may':'05','june':'06','july':'07','august':'08','september':'09','october':'10','november':'11','december':'12'}
+
 
 
 error=True
@@ -43,7 +53,6 @@ s.connect((HOST, int(PORT)))
 
 print("STREAM CONNESSO")
 
-months={'gennaio':'01','febbraio':'02','marzo':'03','aprile':'04','maggio':'05','giugno':'06','luglio':'07','agosto':'08','settembre':'09','ottobre':'10','novembre':'11','dicembre':'12'}
 
 def confronting_date(date,today):
     if date[0]==today[-1] and months[date[1]]==today[1] and date[2]==today[0]:
@@ -57,7 +66,7 @@ def get_reviews_stream(html,last_item):
     first_new=True
     last_item_new=None
     for item in reviews:
-        
+        ####print(last_item)
         try:
             body=item.find('span', {'data-hook': 'review-body'}).text.strip()
         except Exception as e:
@@ -72,13 +81,17 @@ def get_reviews_stream(html,last_item):
             #print("Date:",date)
             today=str(datetime.datetime.now()).split(" ")[0].split("-")
            # print("Datetime:",today)
-            if last_item is None and confronting_date(date,today):
+            if last_item is None:# and confronting_date(date,today):
                 print("oook")
                 last_item=body
                 #last_item.update(body)
         except Exception as e:
             print(e)
 
+        if  body==last_item:
+            print("breaaaak")
+            print(last_item)
+            break
 
         if last_item is not None and confronting_date(date,today) and last_item!=body:
             print("nuova recensione")
@@ -109,7 +122,12 @@ def get_reviews_stream(html,last_item):
                 date=item.find('span',{'data-hook':'review-date'}).text.strip()
                 country=" ".join(date.split(" ")[2:-4])
                 date=" ".join(date.split(" ")[-3:])
-
+                lst=date.split(" ")
+                if int(lst[0])<10:
+                    date=lst[2]+"-"+months[lst[1].lower()]+"-0" +lst[0]
+                else:
+                    date=lst[2]+"-"+months[lst[1].lower()]+"-" +lst[0]
+                
             except Exception as e:
                 print(e)
 
@@ -125,8 +143,8 @@ def get_reviews_stream(html,last_item):
                 print(e)
             
             try:
-                helpful_vote=item.find('span',{'data-hook':'helpful-vote-statement'}).text.strip().split(" ")[0]
-                if helpful_vote.lower()=='una':
+                helpful_vote=item.find('span',{'data-hook':'helpful-vote-statement'}).text.strip().split(" ")[0].replace(",","")
+                if helpful_vote.lower()=='una' or helpful_vote.lower()=='one':
                     helpful_vote=1
             except Exception as e:
                 helpful_vote=0
@@ -167,7 +185,7 @@ def get_reviews_stream(html,last_item):
     
 #driver.get("https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i))
 date=datetime.datetime.now() #.year .month .day
-url="https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&sortBy=recent&pageNumber=1"
+url="https://www.amazon."+str(DOMAIN_URL)+"/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&sortBy=recent&pageNumber=1"
     
 
 last_item=None

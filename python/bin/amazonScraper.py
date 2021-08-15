@@ -7,6 +7,8 @@ import time
 import json
 import requests
 
+
+
 ###FUNCTION TO RETRIEVE REVIEWS AND OTHER DATA
 def get_reviews(soup,s):
     
@@ -36,6 +38,11 @@ def get_reviews(soup,s):
             date=item.find('span',{'data-hook':'review-date'}).text.strip()
             country=" ".join(date.split(" ")[2:-4])
             date=" ".join(date.split(" ")[-3:])
+            lst=date.split(" ")
+            if int(lst[0])<10:
+                date=lst[2]+"-"+months[lst[1].lower()]+"-0" +lst[0]
+            else:
+                date=lst[2]+"-"+months[lst[1].lower()]+"-" +lst[0]
 
         except Exception as e:
             print(e)
@@ -52,9 +59,10 @@ def get_reviews(soup,s):
             print(e)
         
         try:
-            helpful_vote=item.find('span',{'data-hook':'helpful-vote-statement'}).text.strip().split(" ")[0]
-            if helpful_vote.lower()=='una':
+            helpful_vote=item.find('span',{'data-hook':'helpful-vote-statement'}).text.strip().split(" ")[0].replace(",","")
+            if helpful_vote.lower()=='una' or helpful_vote.lower()=='one' :
                 helpful_vote=1
+            
         except Exception as e:
             helpful_vote=0
             print(e)
@@ -77,7 +85,7 @@ def get_reviews(soup,s):
         s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
         time.sleep(int(TIMEOUT_BEFORE_SEND_TO_LOGSTASH))
 
-    print("END GENERAL")
+    print("END GENERAL",flush=True)
 
 
 
@@ -120,6 +128,15 @@ TIMEOUT_FETCH_ANOTHER_PAGE=os.getenv("TIMEOUT_FETCH_ANOTHER_PAGE") ##SECONDI PRI
 START_PAGE=int(os.getenv("START_PAGE"))                            ##PAGINA DA CUI INIZIARE (PREFERIBILMENTE 0)
 END_PAGE=int(os.getenv("END_PAGE"))                                ##PAGINA FINALE 
 DEBUG=os.getenv("DEBUG")                                           ##MODALITA DEBUG SKIPPA CONNESSIONE LOGSTASH SOLO PER TEST E ESPERIMENTI!
+DOMAIN_ULR=os.getenv("DOMAIN_URL")
+
+months={}
+if DOMAIN_ULR=='it':
+    months={'gennaio':'01','febbraio':'02','marzo':'03','aprile':'04','maggio':'05','giugno':'06','luglio':'07','agosto':'08','settembre':'09','ottobre':'10','novembre':'11','dicembre':'12'}
+else:
+    months={'january':'01','february':'02','march':'03','april':'04','may':'05','june':'06','july':'07','august':'08','september':'09','october':'10','november':'11','december':'12'}
+
+
 
 HOST=HOST_LOGSTASH
 PORT=int(PORT_LOGSTASH)
@@ -159,9 +176,9 @@ url_photo="https://www.amazon.it/dp/"+str(CODE_PRODUCT)
 get_photos(url_photo)
 
 
-
+CODE_PRODUCT="B07PJV3JPR"
 for i in range(START_PAGE,END_PAGE):
-    url="https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i)
+    url="https://www.amazon."+str(DOMAIN_ULR) + "/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i)
     driver.get(url)
     #driver.get("https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i))
     html = driver.page_source
