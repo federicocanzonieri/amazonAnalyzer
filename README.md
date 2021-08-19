@@ -1,8 +1,7 @@
 
 # amazonAnalyzer
 
-
-
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/federicocanzonieri/amazonAnalyzer/HEAD?filepath=book)
 ## Description
 
 - This is a project created for the subject of TAP (Technologies for Advanced Programming) at UniCT.
