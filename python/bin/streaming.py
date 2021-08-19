@@ -6,7 +6,7 @@ import socket
 import time
 import json
 import datetime 
-
+from fake_useragent import UserAgent
 
 #########SISTEMARE LINGUA INGLESE PURE QUAAAAAAAAAAAAAAA
 
@@ -15,8 +15,11 @@ chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--disable-extensions')
-driver = webdriver.Chrome(chrome_options=chrome_options,port=39192)
-
+driver = webdriver.Chrome(chrome_options=chrome_options)
+ua=UserAgent()
+userAgent=ua.random
+print(userAgent)
+chrome_options.add_argument(f'user-agent={userAgent}')
 
 HOST=os.getenv("HOST_LOGSTASH")
 PORT=os.getenv("PORT_LOGSTASH")
@@ -72,24 +75,24 @@ def get_reviews_stream(html,last_item):
         except Exception as e:
             print(e)
         print(body)
-        ###quando leggo nuovi item last_item is not None ad confronting date (oggi!) last_item!=current bod
+        
 
         try:
             date=item.find('span',{'data-hook':'review-date'}).text.strip()
             country=" ".join(date.split(" ")[2:-4])
             date=date.split(" ")[-3:]
-            #print("Date:",date)
+            
             today=str(datetime.datetime.now()).split(" ")[0].split("-")
-           # print("Datetime:",today)
+           
             if last_item is None:# and confronting_date(date,today):
-                print("oook")
+                print("ok modified")
                 last_item=body
-                #last_item.update(body)
+                
         except Exception as e:
             print(e)
 
         if  body==last_item:
-            print("breaaaak")
+            print("break")
             print(last_item)
             break
 
@@ -98,8 +101,8 @@ def get_reviews_stream(html,last_item):
             if first_new:
                 last_item_new=body ## nuovo primo elemento
                 first_new=False
-                print("dovrei modificare last item")
-            print("send()... ")
+                #print("dovrei modificare last item")
+            #print("send()... ")
             ###
             title,rating,body,date,name,helpful_vote,verified_buy,country="","","","","","","",""
             try:
@@ -166,7 +169,7 @@ def get_reviews_stream(html,last_item):
             time.sleep(1)
 
         if  body==last_item:
-            print("breaaaak")
+            print("break")
             print(last_item)
             break
         
@@ -189,13 +192,13 @@ url="https://www.amazon."+str(DOMAIN_URL)+"/product-reviews/"+ str(CODE_PRODUCT)
     
 
 last_item=None
-print("LAZZARO")
+
 while True:
      ##OGNI 5 MINUTI
     driver.get(url)
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
     last_item=get_reviews_stream(soup,last_item)
-    print("ereras",flush=True)
+    print("wait",flush=True)
     
     time.sleep(MINUTES_TO_WAIT*60)

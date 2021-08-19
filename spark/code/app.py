@@ -12,7 +12,7 @@ from pyspark.sql.functions import udf
 from translate import Translator
 
 
-translator= Translator(to_lang="en")
+translator= Translator(to_lang="en")##from italian
 
 
 HOST_ELASTIC=os.getenv("IP_ELASTIC")

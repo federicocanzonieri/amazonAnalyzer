@@ -6,7 +6,7 @@ import socket
 import time
 import json
 import requests
-
+from fake_useragent import UserAgent
 
 
 ###FUNCTION TO RETRIEVE REVIEWS AND OTHER DATA
@@ -16,7 +16,8 @@ def get_reviews(soup,s):
     print("START GENERAL")
     reviews = soup.find_all('div',{'data-hook':'review'})
     for item in reviews:
-        #print(item)
+        
+       
         title,rating,body,date,name,helpful_vote,verified_buy,country="","","","","","","",""
         try:
             title=item.find('a', {'data-hook': 'review-title'}).text.strip()
@@ -84,6 +85,7 @@ def get_reviews(soup,s):
         s.send(json.dumps(review).encode())
         s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
         time.sleep(int(TIMEOUT_BEFORE_SEND_TO_LOGSTASH))
+        print(title)
 
     print("END GENERAL",flush=True)
 
@@ -105,7 +107,7 @@ def get_photos(url):
             print(img.get('data-a-dynamic-image').split(":")[1])
             download_url="https:"+str(img.get('data-a-dynamic-image').split(":")[1])
             print(download_url[:-1])
-        #print(item.attrs['class'][0]])
+        
 
     response = requests.get(str(download_url[:-1]))
     file = open("images/product_image.jpg", "wb")
@@ -117,6 +119,10 @@ chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--disable-extensions')
+ua=UserAgent()
+userAgent=ua.random
+print(userAgent)
+chrome_options.add_argument(f'user-agent={userAgent}')
 driver = webdriver.Chrome(chrome_options=chrome_options)
 
 CODE_PRODUCT=os.getenv("CODE_PRODUCT")                             ##CODICE PRODOTTO DA ANALIZZARE
@@ -128,10 +134,11 @@ TIMEOUT_FETCH_ANOTHER_PAGE=os.getenv("TIMEOUT_FETCH_ANOTHER_PAGE") ##SECONDI PRI
 START_PAGE=int(os.getenv("START_PAGE"))                            ##PAGINA DA CUI INIZIARE (PREFERIBILMENTE 0)
 END_PAGE=int(os.getenv("END_PAGE"))                                ##PAGINA FINALE 
 DEBUG=os.getenv("DEBUG")                                           ##MODALITA DEBUG SKIPPA CONNESSIONE LOGSTASH SOLO PER TEST E ESPERIMENTI!
-DOMAIN_ULR=os.getenv("DOMAIN_URL")
+DOMAIN_URL=os.getenv("DOMAIN_URL")
+MODE_REVIEWS=os.getenv("MODE_REVIEWS")
 
 months={}
-if DOMAIN_ULR=='it':
+if DOMAIN_URL=='it':
     months={'gennaio':'01','febbraio':'02','marzo':'03','aprile':'04','maggio':'05','giugno':'06','luglio':'07','agosto':'08','settembre':'09','ottobre':'10','novembre':'11','dicembre':'12'}
 else:
     months={'january':'01','february':'02','march':'03','april':'04','may':'05','june':'06','july':'07','august':'08','september':'09','october':'10','november':'11','december':'12'}
@@ -164,25 +171,26 @@ if DEBUG=='no':
     s.connect((HOST, PORT))
 
 
-##CODICI TEST
-
-##B00ZYDLE80 paperino
-##B093T7GQWB moco
 
 
 ##TAKE PHOTOS
-url_photo="https://www.amazon.it/dp/"+str(CODE_PRODUCT)
-#url_photo="https://www.amazon.it/dp/B07ZZVWB4L/"
+url_photo="https://www.amazon."+str(DOMAIN_URL)+"/dp/"+str(CODE_PRODUCT)
 get_photos(url_photo)
 
 
-CODE_PRODUCT="B07PJV3JPR"
+
+
 for i in range(START_PAGE,END_PAGE):
-    url="https://www.amazon."+str(DOMAIN_ULR) + "/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i)
+    url="https://www.amazon."+str(DOMAIN_URL) + "/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&"+"sortBy="+str(MODE_REVIEWS) +"&pageNumber="+str(i)
     driver.get(url)
-    #driver.get("https://www.amazon.it/product-reviews/"+ str(CODE_PRODUCT) +"/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews&pageNumber="+str(i))
+
+    ####CANCELLARE DOPO
+    print(url)
+    ####
+
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
+    #print(soup)
     get_reviews(soup,s)
     time.sleep(int(TIMEOUT_FETCH_ANOTHER_PAGE))
 

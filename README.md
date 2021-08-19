@@ -57,6 +57,8 @@ To modify configuration see **.env** file
 |START_PAGE |Page start reviews |0 |
 |END_PAGE|Page end reviews | 6 |
 |MINUTES_TO_WAIT|Wait before fetch **streaming** page | 5 |
+|DOMAIN_URL| Domain for fetch pages (www.amazon.) | supported co.uk,it  |
+|MODE_REVIEWS| "recent" or "useful" | "recent"  |
 
 
 ## Network
