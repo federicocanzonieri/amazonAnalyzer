@@ -15,7 +15,7 @@
 | Step | Technology used |
 | :-: | :-: |
 | Source | [Amazon with Python Scraper (Selenium)](https://www.amazon.it/ref=nav_logo) |
-|Integration | Logstash|
+|Integration | [Logstash](https://www.elastic.co/logstash/)|
 | Streaming| [Apache Kafka](https://kafka.apache.org/) |
 | Processing |  [Apache Spark with sentiment analysis by Vader](https://spark.apache.org/) |
 | Data storage | [Apache Cassandra](https://cassandra.apache.org/) - [Elasticsearch](https://www.elastic.co/enterprise-search) |
@@ -52,7 +52,7 @@ To modify configuration see **.env** file
 
 | Variable| Description |Default value|
 | :-: | :-: |:-:|
-|CODE_PRODUCT| Code of the product to analyze (default alexa) |B093T7GQWB |
+|CODE_PRODUCT| Code of the product to analyze (default alexa) | ... |
 |TIMEOUT_FETCH_ANOTHER_PAGE|Time (second) to wait before fetch another page | 5 |
 |START_PAGE |Page start reviews |0 |
 |END_PAGE|Page end reviews | 6 |
@@ -76,3 +76,7 @@ Here is the table of services and network configuration.
 |Spark| **10.0.100.80** |
 |ElasticSearch | **10.0.100.51** |**9200/9300**
 |Kibana | **10.0.100.52** |
+
+
+## Notes
+Make sure that you have all the containers up after the "start.sh".

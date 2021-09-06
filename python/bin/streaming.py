@@ -74,7 +74,7 @@ def get_reviews_stream(html,last_item):
             body=item.find('span', {'data-hook': 'review-body'}).text.strip()
         except Exception as e:
             print(e)
-        print(body)
+        #print(body)
         
 
         try:

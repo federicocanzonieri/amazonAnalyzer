@@ -85,7 +85,7 @@ def get_reviews(soup,s):
         s.send(json.dumps(review).encode())
         s.send(bytes(REQUIRED_CHARACTER,'utf-8'))
         time.sleep(int(TIMEOUT_BEFORE_SEND_TO_LOGSTASH))
-        print(title)
+        #print(title)
 
     print("END GENERAL",flush=True)
 
@@ -100,13 +100,13 @@ def get_photos(url):
     img_container=soup.find_all("div",{"id":"imgTagWrapperId"})
     download_url=""
     for item in img_container:
-        print(item)
+        #print(item)
         
         for img in item.find_all("img"):
             
-            print(img.get('data-a-dynamic-image').split(":")[1])
+            #print(img.get('data-a-dynamic-image').split(":")[1])
             download_url="https:"+str(img.get('data-a-dynamic-image').split(":")[1])
-            print(download_url[:-1])
+            #print(download_url[:-1])
         
 
     response = requests.get(str(download_url[:-1]))
