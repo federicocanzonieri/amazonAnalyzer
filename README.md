@@ -18,7 +18,7 @@
 |Integration | [Logstash](https://www.elastic.co/logstash/)|
 | Streaming| [Apache Kafka](https://kafka.apache.org/) |
 | Processing |  [Apache Spark with sentiment analysis by Vader](https://spark.apache.org/) |
-| Data storage | [Apache Cassandra](https://cassandra.apache.org/) - [Elasticsearch](https://www.elastic.co/enterprise-search) |
+| Data storage | [Elasticsearch](https://www.elastic.co/enterprise-search) |
 | Visualization | [Kibana](https://www.elastic.co/kibana) |
 
 
